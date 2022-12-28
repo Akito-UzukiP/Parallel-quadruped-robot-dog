@@ -14,9 +14,73 @@ l1 =0.1
 l2 = 0.1
 l3 = 0.15
 l4 = 0.12
-l5 = 0.02#末端与l3-l4连杆转轴的距离
-#!!!!注意!!!!!
+l5 = 0.03#末端与l3-l4连杆转轴的距离
+#!!!!注意!!!!!wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
 #step_curve的xyz是在机体参考系的,与脚参考系不同！
+#l1 l2 与夹角
+def cosine_law_length(l1,l2,theta):
+    return math.sqrt(l1*l1+l2*l2-2*l1*l2*math.cos(theta))
+#计算l3对角
+def cosine_law_theta(l1,l2,l3):
+    return math.acos((l1*l1+l2*l2-l3*l3)/(2*l1*l2))
+def my_atan(x,y):
+
+    if x == 0:
+        theta = pi/2
+    else:
+        theta = math.atan(y/x)
+    if theta < 0:
+        return theta+math.pi
+    return theta
+def ik(position,type='left'):#type='left'为左侧坐标系,type='right'为右侧 统一一下以左侧坐标系为正，把右侧给翻过来
+    x = position[0]
+    y_ = position[1]
+    theta3=0
+
+    #调用了全局变量转轴半径
+    z = position[2]
+    y = math.sqrt(z*z+y_*y_-motor0_radius*motor0_radius)
+    if type =='left':
+        theta1 = my_atan(motor0_radius,y)+my_atan(y_,z)-pi/2
+    else:
+        theta1 = pi/2 + my_atan(motor0_radius,y) - my_atan(y_,z)
+    theta0 = my_atan(x,y)
+    if theta1 > pi/2:
+        theta1 -=  pi
+    k = math.sqrt(x * x + y * y)
+    alpha = math.acos((k * k + l1 * l1 - l3 * l3) / 2 / l1 / k)
+    beta = math.acos((l1 * l1 + l3 * l3 - k * k) / 2 / l1 / l3)
+    #gamma = math.pi + alpha - beta
+    theta3 = theta0 - alpha
+    gamma = math.pi +theta3 - beta
+    x2 = x - l5 * math.cos(gamma)
+    y2 = y - l5 * math.sin(gamma)
+
+    theta02 = my_atan(x2,y2)
+    z2 = math.sqrt(x2 * x2 + y2 * y2)
+    alpha2 = math.acos((z2*z2+l1*l1-l4*l4)/2/l1/z2)
+    theta2 = theta02 + alpha2
+    if(type == 'right'):
+        return  -theta1,theta2,theta3,
+    return theta1,theta2,theta3 #连杆电机12,3--》根部电机
+def fk(theta,type='left'):
+    #theta[0]是根部电机,1是短连杆，2是长连杆
+    alpha = theta[1]-theta[2] #夹角
+    lbc = cosine_law_length(l1,l2,alpha)
+   # theta_abc = cosine_law_theta(l1,lbc,l2)
+   # theta_dbc = cosine_law_tehta((l3-l5),lbc,l4)
+    theta_b = cosine_law_theta(l1,lbc,l2)+cosine_law_theta((l3-l5),lbc,l4)
+    lap = cosine_law_length(l1,l3,theta_b)
+    beta = cosine_law_theta(l1,lap,l3)
+    gamma = theta[2]+beta
+    p = [lap*math.cos(gamma),lap*math.sin(gamma),0]
+    if type == 'left':
+        p[2] = p[1]*math.sin(theta[0])+motor0_radius*math.cos(theta[0])
+        p[1] = p[1]*math.cos(theta[0])-motor0_radius*math.sin(theta[0])
+    else:
+        p[2] = p[1]*math.sin(theta[0]) - motor0_radius*math.cos(theta[0])
+        p[1] = p[1]*math.cos(theta[0]) + motor0_radius*math.sin(theta[0])
+    return p
 def step_curve(start_point,end_point,progess,height=0.03):
 
     x_s,y_s,z_s = start_point
@@ -29,49 +93,34 @@ def step_curve(start_point,end_point,progess,height=0.03):
     return x_c, y_c, h_c
 def straight_curve(start_point, end_point,progress):
     return ((np.array(end_point)-np.array(start_point)) * progress + np.array(start_point)).tolist()
-def my_atan(x,y):
-
-    if x == 0:
-        theta = pi/2
-    else:
-        theta = math.atan(y/x)
-    if theta < 0:
-        return theta+math.pi
-    return theta
 #腿参考系
-
-def ik(position,type='left'):#type='left'为左侧坐标系,type='right'为右侧 统一一下以左侧坐标系为正，把右侧给翻过来
-    x = position[0]
-    y_ = position[1]
-    theta3=0
-
-    #调用了全局变量转轴半径
-    z = position[2]
-    y = math.sqrt(z*z+y_*y_-motor0_radius*motor0_radius)
-    if type =='left':
-        theta3 = my_atan(motor0_radius,y)+my_atan(y_,z)-pi/2
-    else:
-        theta3 = pi/2 + my_atan(motor0_radius,y) - my_atan(y_,z)
-    theta0 = my_atan(x,y)
-    if theta3 > pi/2:
-        theta3 -=  pi
-    k = math.sqrt(x * x + y * y)
-    alpha = math.acos((k * k + l2 * l2 - l3 * l3) / 2 / l2 / k)
-    beta = math.acos((l2 * l2 + l3 * l3 - k * k) / 2 / l2 / l3)
-    gamma = math.pi + alpha - beta
-    theta1 = theta0 - alpha
-
-    x2 = x - l5 * math.cos(gamma)
-    y2 = y - l5 * math.sin(gamma)
-
-    theta02 = my_atan(x2,y2)
-    z2 = math.sqrt(x2 * x2 + y2 * y2)
-    alpha2 = math.acos((z2*z2+l1*l1-l4*l4)/2/l1/z2)
-    theta2 = theta02 + alpha2
-    if(type == 'right'):
-        return  -theta3,theta2,theta1,
-    return theta3,theta2,theta1 #连杆电机12,3--》根部电机
-
+def get_positions():
+    angles_ = []
+    for i in motors_:
+        angles_.append(i.getTargetPosition())
+    angles = np.array(angles_).reshape((4,3))
+    positions = []
+    for i in angles:
+        positions.append(fk(i))
+    return positions
+def rpy2angle(rpy,height):
+    current_position = get_positions()
+    x_len = 0.13*2
+    y_len = 0.06*2
+    roll = rpy[0]#绕x轴转动的角度
+    pitch = rpy[1]#绕y轴转动的
+    yaw = rpy[2]#无用
+    #顺时针转动 如果roll为正则左倾,左边应该高右边应该低
+    #如果pitch为正则前倾，应该前面高后面低
+    cdz_fb = (current_position[0][1]-current_position[1][1]+current_position[2][1]-current_position[3][1])/4
+    cdz_lr = (current_position[0][1] + current_position[1][1] - current_position[2][1] - current_position[3][1])/4
+    dz_lr = y_len*math.tan(roll)/3
+    dz_fb = x_len*math.tan(pitch)/3
+    delta0 = cdz_lr + cdz_fb-dz_lr+dz_fb
+    delta1 = cdz_lr - cdz_fb-dz_lr+dz_fb
+    delta2 = -cdz_lr + cdz_fb + dz_lr + dz_fb
+    delta3 = -cdz_lr - cdz_fb - dz_lr - dz_fb
+    return  [[0,height+delta0,0],[0,height+delta1,0],[0,height+delta2,0],[0,height+delta3,0]]
 def smooth_to_angle(targets,steps):
     current_ = []
     for i in motors_:
@@ -96,7 +145,6 @@ def smooth_to_angle(targets,steps):
         for j in range(len(motors_)):
             motors_[j].setPosition(current_[j]+(target[j]-current[j])*i/steps)
         robot.step()
-
 #传入的应该是4x3维,左前左后右前右后顺序的脚坐标系位置
 def smooth_to_position(positions,steps):
     targets = []
@@ -182,7 +230,7 @@ def trot(timeStep,height = 0.13,length = 0.05, period = 16):
     motors_[9].setPosition(theta9)
     motors_[10].setPosition(theta10)
     motors_[11].setPosition(theta11)
-
+#丑陋不堪的代码 明天重写
 def turn_inplace_one_step(theta,period,height=0.13):
     _x = 0.13
     _y = 0.06
@@ -267,16 +315,21 @@ def radius_turning_calculation(radius,theta):
     #radius = np.sqrt((refer_to_radius_center*refer_to_radius_center).sum(axis=1))#相对转向半径中心各点的半径
     r1 = R01.dot(r.T).T
     return r1-r
-def turn_radius_one_step(radius,theta,period,left_right='left',front_back='front',height=0.13):
+def turn_radius_one_step(radius,theta,period,left_right='back',front_back='right',height=0.13):
     radius = abs(radius)
     theta = abs(theta)
-    if((left_right == 'right') & (front_back == 'front')):
+    if(left_right == 'right') & (front_back == 'front'):
+        radius = radius
+        theta = -theta
+    elif(left_right == 'left') & (front_back == 'front'):
+        radius = -radius
+        theta = theta
+    elif(left_right == 'left') & (front_back == 'back'):
         radius = -radius
         theta = -theta
-    elif((left_right == 'right') & (front_back == 'back')):
-        radius = -radius
-    elif((left_right == 'left') & (front_back == 'back')):
-        theta = -theta
+    else:
+        radius = radius
+        theta = theta
     movements13 = radius_turning_calculation(radius,theta)
     movements24 = radius_turning_calculation(radius,-theta)
     movements13 = movements13 + np.array([0, 0, height])
@@ -329,7 +382,7 @@ def turn_radius_one_step(radius,theta,period,left_right='left',front_back='front
         motors_[11].setPosition(theta2)
         robot.step()
 
-
+#把roll pitch yaw根据yaw做一个旋转变换
 
 ##########主代码部分##########
 robot = Robot()
@@ -371,38 +424,32 @@ smooth_to_position([[0, 0.13, 0],
  #                         0,0.95*pi,0.1*pi,
   #                        0,0.75*pi,0.0*pi],64)
 t_=0
+
+
 while robot.step(timestep) != -1:
-    print(imu.getRollPitchYaw())
+    rpy = imu.getRollPitchYaw()
+    print(rpy)
     t_+=1
     t = t_ % 32
-    if t_ < 8:
-        for i in [0.06, 0.16]:
-            smooth_to_position([[0, i, 0],[0, i, 0],[0, i, 0],[0, i, 0]], 8)
-    elif t_ < 256:
-        walk(t)
-    elif t_ < 512:
-        trot(-t)
-    else:
+    pass
+    if keyboard.is_pressed("w"):
+        if keyboard.is_pressed('a'):
+            turn_radius_one_step(0.5,pi/16,8,front_back='front',left_right='left')
+        elif keyboard.is_pressed(('d')):
+            turn_radius_one_step(0.5,pi/16,8,front_back='front',left_right='right')
+        else:
+            trot(-t,length=0.1)
+    elif keyboard.is_pressed("s"):
+        if keyboard.is_pressed('a'):
+            turn_radius_one_step(0.5,pi/16,8,front_back='back',left_right='left')
+        elif keyboard.is_pressed(('d')):
+            turn_radius_one_step(0.5,pi/16,8,front_back='back',left_right='right')
+        else:
+            trot(t,length=0.1)
+    elif keyboard.is_pressed('a'):
         turn_inplace_one_step(pi/16,8)
-    #motors_[0].setPosition(0)
-    #motors_[1].setPosition(0)
-    #if(t<8):
-    #    turn_radius_one_step(0.3,pi/16,8,'left','front')
-    #elif(t<16):
-    #    turn_radius_one_step(0.4, pi / 16, 8,'left','back')
-    #elif (t < 24):
-    #    turn_radius_one_step(0.2, pi / 16, 8, 'right', 'front')
-   # else:
-    #    turn_radius_one_step(0.5, pi / 16, 8, 'right', 'back')
-    #trot(-t)
-    #turn_inplace_one_step(-pi/16,8)
-
-    #my_set_velocity(motors_[0],1)
-    #my_set_velocity(motors_[1],-3)
-
-    # Process sensor data here.
-    # Enter here functions to send actuator commands, like:
-    #  motor.setPosition(10.0)
-
-# Enter here exit cleanup code.
-    # if keyboard.is_pressed("w"):
+    elif keyboard.is_pressed('d'):
+        turn_inplace_one_step(-pi/16,8)
+    else:
+        stand_still_positions = rpy2angle(rpy,0.13)
+        smooth_to_position(stand_still_positions, 16)
