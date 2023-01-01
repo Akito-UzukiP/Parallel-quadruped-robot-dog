@@ -68,6 +68,7 @@ def ik(position,type='left'):#type='left'为左侧坐标系,type='right'为右�
             return -theta1, theta2, theta3,
         return theta1, theta2, theta3  # 连杆电机21,1--》根部电机
     elif legtype == 'series':
+        theta3 = theta1
         alpha = my_atan(x,y)
         l6 = math.sqrt(x*x+y*y)
         theta2 = pi-cosine_law_theta(l7,l8,l6)
