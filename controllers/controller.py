@@ -1,14 +1,10 @@
-"""my_controller controller."""
-
-# You may need to import some classes of the controller module. Ex:
-#  from controller import Robot, Motor, DistanceSensor
 import math
 import keyboard
 import numpy as np
 from controller.robot import Robot
 from controller import wb
 #机器人常数
-legtype='series'
+legtype='quad'
 motor0_radius = 0.01
 pi = math.pi
 l1 =0.1
@@ -18,7 +14,7 @@ l4 = 0.12
 l5 = 0.03#末端与l3-l4连杆转轴的距离
 l7 = 0.1
 l8 = 0.1
-#!!!!注意!!!!!wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+#!!!!注意!!!!!
 #step_curve的xyz是在机体参考系的,与脚参考系不同！
 #l1 l2 与夹角
 def cosine_law_length(l1,l2,theta):
@@ -43,7 +39,7 @@ def ik(position,type='left'):#type='left'为左侧坐标系,type='right'为右�
     #调用了全局变量转轴半径
     z = position[2]
     y = math.sqrt(z*z+y_*y_-motor0_radius*motor0_radius)
-    if legtype =='left':
+    if type =='left':
         theta1 = my_atan(motor0_radius,y)+my_atan(y_,z)-pi/2
     else:
         theta1 = pi/2 + my_atan(motor0_radius,y) - my_atan(y_,z)
@@ -73,6 +69,7 @@ def ik(position,type='left'):#type='left'为左侧坐标系,type='right'为右�
         l6 = math.sqrt(x*x+y*y)
         theta2 = pi-cosine_law_theta(l7,l8,l6)
         theta1 = alpha-cosine_law_theta(l7,l6,l8)
+        print(theta3)
         if (type == 'right'):
             return -theta3, theta1, theta2,
         return theta3, theta1, theta2  # 连杆电机21,1--》根部电机
@@ -249,72 +246,127 @@ def turn_inplace_one_step(theta,period,height=0.13):
     _x = 0.13
     _y = 0.06
     _r = math.sqrt(_x*_x+_y*_y)
+    #R是后位置到前位置的转换矩阵
     R = np.array([[math.cos(theta),-math.sin(theta),0],
          [math.sin(theta),math.cos(theta),0],
          [0,0,1]])
-    legs = np.array([[_x, _y, height],[-_x, _y, height],[_x, -_y, height],[-_x, -_y, height]])
+    legs = np.array([[_x, _y, 0],[-_x, _y, 0],[_x, -_y, 0],[-_x, -_y, 0]])
+    #1是向前的
     legs_n_1 = R.dot(legs.T).T
+    #3是跟上的
     legs_n_3 = R.T.dot(legs_n_1.T).T
-    movements1 = legs_n_1 - legs
-    movements1[0][2],movements1[1][2],movements1[2][2],movements1[3][2] = height,height,height,height
-    movements3 = legs_n_3 - legs_n_1
-    movements3[0][2],movements3[1][2],movements3[2][2],movements3[3][2] = height,height,height,height
+    movements1 = legs_n_1 - legs + np.array([0,0,height])
+    #movements1[0][2],movements1[1][2],movements1[2][2],movements1[3][2] = height,height,height,height
+    movements3 = legs_n_3 - legs_n_1 + np.array([0, 0, height])
+    #movements3[0][2],movements3[1][2],movements3[2][2],movements3[3][2] = height,height,height,height
     legs_n_2 = R.T.dot(legs.T).T
     legs_n_4 = R.dot(legs_n_2.T).T
-    movements2 = legs_n_2 - legs
-    movements2[0][2],movements2[1][2],movements2[2][2],movements2[3][2] = height,height,height,height
-    movements4 = legs_n_4 - legs_n_2
-    movements4[0][2],movements4[1][2],movements4[2][2],movements4[3][2] = height,height,height,height
+    movements2 = legs_n_2 - legs + np.array([0, 0, height])
+    #movements2[0][2],movements2[1][2],movements2[2][2],movements2[3][2] = height,height,height,height
+    movements4 = legs_n_4 - legs_n_2 + np.array([0, 0, height])
+    #movements4[0][2],movements4[1][2],movements4[2][2],movements4[3][2] = height,height,height,height
     #print(movements1)
     #print(movements2)
+    print(movements1,"\n",movements2,'\n',theta)
+    if theta > 0:
+        print('leftTurn')
+        for j in range(period):
+            k = j/period
+            x,y,z = step_curve((0,0,height),movements1[0],k)
+            theta0,theta1,theta2 = ik((x, z, y))
+            motors_[0].setPosition(theta0)
+            motors_[1].setPosition(theta1)
+            motors_[2].setPosition(theta2)
+            x,y,z = straight_curve((0,0,height),movements2[1],k)
+            theta0,theta1,theta2 = ik((x, z, y))
+            motors_[3].setPosition(theta0)
+            motors_[4].setPosition(theta1)
+            motors_[5].setPosition(theta2)
+            x,y,z = straight_curve((0,0,height),movements2[2],k)
+            theta0,theta1,theta2 = ik((x, z, y), type='right')
+            motors_[6].setPosition(theta0)
+            motors_[7].setPosition(theta1)
+            motors_[8].setPosition(theta2)
+            x,y,z = step_curve((0,0,height),movements1[3],k)
+            theta0,theta1,theta2 = ik((x, z, y), type='right')
+            motors_[9].setPosition(theta0)
+            motors_[10].setPosition(theta1)
+            motors_[11].setPosition(theta2)
+            robot.step()
+        pass
+        for j in range(period):
+            k = j/period
+            x,y,z = straight_curve(movements1[0],(0,0,height),k)
+            theta0,theta1,theta2 = ik((x, z, y))
+            motors_[0].setPosition(theta0)
+            motors_[1].setPosition(theta1)
+            motors_[2].setPosition(theta2)
+            x,y,z = step_curve(movements2[1],(0,0,height),k)
+            theta0,theta1,theta2 = ik((x, z, y))
+            motors_[3].setPosition(theta0)
+            motors_[4].setPosition(theta1)
+            motors_[5].setPosition(theta2)
+            x,y,z = step_curve(movements2[2],(0,0,height),k)
+            theta0,theta1,theta2 = ik((x, z, y), type='right')
+            motors_[6].setPosition(theta0)
+            motors_[7].setPosition(theta1)
+            motors_[8].setPosition(theta2)
+            x,y,z = straight_curve(movements1[3],(0,0,height),k)
+            theta0,theta1,theta2 = ik((x, z, y), type='right')
+            motors_[9].setPosition(theta0)
+            motors_[10].setPosition(theta1)
+            motors_[11].setPosition(theta2)
+            robot.step()
+    else:
+        print('rightTurn')
+        for j in range(period):
+            k = j/period
+            x,y,z = straight_curve((0,0,height),movements2[0],k)
+            theta0,theta1,theta2 = ik((x, z, y))
+            motors_[0].setPosition(theta0)
+            motors_[1].setPosition(theta1)
+            motors_[2].setPosition(theta2)
+            x,y,z = step_curve((0,0,height),movements1[1],k)
+            theta0,theta1,theta2 = ik((x, z, y))
+            motors_[3].setPosition(theta0)
+            motors_[4].setPosition(theta1)
+            motors_[5].setPosition(theta2)
+            x,y,z = step_curve((0,0,height),movements1[2],k)
+            theta0,theta1,theta2 = ik((x, z, y), type='right')
+            motors_[6].setPosition(theta0)
+            motors_[7].setPosition(theta1)
+            motors_[8].setPosition(theta2)
+            x,y,z = straight_curve((0,0,height),movements2[3],k)
+            theta0,theta1,theta2 = ik((x, z, y), type='right')
+            motors_[9].setPosition(theta0)
+            motors_[10].setPosition(theta1)
+            motors_[11].setPosition(theta2)
+            robot.step()
+        pass
+        for j in range(period):
+            k = j/period
+            x,y,z = step_curve(movements2[0],(0,0,height),k)
+            theta0,theta1,theta2 = ik((x, z, y))
+            motors_[0].setPosition(theta0)
+            motors_[1].setPosition(theta1)
+            motors_[2].setPosition(theta2)
+            x,y,z = straight_curve(movements1[1],(0,0,height),k)
+            theta0,theta1,theta2 = ik((x, z, y))
+            motors_[3].setPosition(theta0)
+            motors_[4].setPosition(theta1)
+            motors_[5].setPosition(theta2)
+            x,y,z = straight_curve(movements1[2],(0,0,height),k)
+            theta0,theta1,theta2 = ik((x, z, y), type='right')
+            motors_[6].setPosition(theta0)
+            motors_[7].setPosition(theta1)
+            motors_[8].setPosition(theta2)
+            x,y,z = step_curve(movements2[3],(0,0,height),k)
+            theta0,theta1,theta2 = ik((x, z, y), type='right')
+            motors_[9].setPosition(theta0)
+            motors_[10].setPosition(theta1)
+            motors_[11].setPosition(theta2)
+            robot.step()
 
-    for j in range(period):
-        k = j/period
-        x,y,z = step_curve((0,0,height),movements1[0],k)
-        theta0,theta1,theta2 = ik((x, z, y))
-        motors_[0].setPosition(theta0)
-        motors_[1].setPosition(theta1)
-        motors_[2].setPosition(theta2)
-        x,y,z = straight_curve((0,0,height),movements2[1],k)
-        theta0,theta1,theta2 = ik((x, z, y))
-        motors_[3].setPosition(theta0)
-        motors_[4].setPosition(theta1)
-        motors_[5].setPosition(theta2)
-        x,y,z = straight_curve((0,0,height),movements2[2],k)
-        theta0,theta1,theta2 = ik((x, z, y), type='right')
-        motors_[6].setPosition(theta0)
-        motors_[7].setPosition(theta1)
-        motors_[8].setPosition(theta2)
-        x,y,z = step_curve((0,0,height),movements1[3],k)
-        theta0,theta1,theta2 = ik((x, z, y), type='right')
-        motors_[9].setPosition(theta0)
-        motors_[10].setPosition(theta1)
-        motors_[11].setPosition(theta2)
-        robot.step()
-    pass
-    for j in range(period):
-        k = j/period
-        x,y,z = straight_curve(movements1[0],(0,0,height),k)
-        theta0,theta1,theta2 = ik((x, z, y))
-        motors_[0].setPosition(theta0)
-        motors_[1].setPosition(theta1)
-        motors_[2].setPosition(theta2)
-        x,y,z = step_curve(movements2[1],(0,0,height),k)
-        theta0,theta1,theta2 = ik((x, z, y))
-        motors_[3].setPosition(theta0)
-        motors_[4].setPosition(theta1)
-        motors_[5].setPosition(theta2)
-        x,y,z = step_curve(movements2[2],(0,0,height),k)
-        theta0,theta1,theta2 = ik((x, z, y), type='right')
-        motors_[6].setPosition(theta0)
-        motors_[7].setPosition(theta1)
-        motors_[8].setPosition(theta2)
-        x,y,z = straight_curve(movements1[3],(0,0,height),k)
-        theta0,theta1,theta2 = ik((x, z, y), type='right')
-        motors_[9].setPosition(theta0)
-        motors_[10].setPosition(theta1)
-        motors_[11].setPosition(theta2)
-        robot.step()
 
 #计算在转向theta后在各个脚的坐标系下的变化量，以numpy.array形式返回xyz坐标(各个脚坐标系下的),4组
 def radius_turning_calculation(radius,theta):
@@ -332,13 +384,16 @@ def radius_turning_calculation(radius,theta):
 def turn_radius_one_step(radius,theta,period,left_right='back',front_back='right',height=0.13):
     radius = abs(radius)
     theta = abs(theta)
+    alter = False
     if(left_right == 'right') & (front_back == 'front'):
+        alter = True
         radius = radius
         theta = -theta
     elif(left_right == 'left') & (front_back == 'front'):
         radius = -radius
         theta = theta
     elif(left_right == 'left') & (front_back == 'back'):
+        alter = True
         radius = -radius
         theta = -theta
     else:
@@ -348,53 +403,102 @@ def turn_radius_one_step(radius,theta,period,left_right='back',front_back='right
     movements24 = radius_turning_calculation(radius,-theta)
     movements13 = movements13 + np.array([0, 0, height])
     movements24 = movements24 + np.array([0, 0, height])
-    for j in range(period):
-        k = j/period
-        x,y,z = step_curve((0,0,height),movements13[0],k)
-        theta0,theta1,theta2 = ik((x, z, y))
-        motors_[0].setPosition(theta0)
-        motors_[1].setPosition(theta1)
-        motors_[2].setPosition(theta2)
-        x,y,z = straight_curve((0,0,height),movements24[1],k)
-        theta0,theta1,theta2 = ik((x, z, y))
-        motors_[3].setPosition(theta0)
-        motors_[4].setPosition(theta1)
-        motors_[5].setPosition(theta2)
-        x,y,z = straight_curve((0,0,height),movements24[2],k)
-        theta0, theta1, theta2 = ik((x, z, y), type='right')
-        motors_[6].setPosition(theta0)
-        motors_[7].setPosition(theta1)
-        motors_[8].setPosition(theta2)
-        x,y,z = step_curve((0,0,height),movements13[3],k)
-        theta0,theta1,theta2= ik((x, z, y), type='right')
-        motors_[9].setPosition(theta0)
-        motors_[10].setPosition(theta1)
-        motors_[11].setPosition(theta2)
-        robot.step()
-    pass
-    for j in range(period):
-        k = j/period
-        x,y,z = straight_curve(movements13[0],(0,0,height),k)
-        theta0,theta1,theta2 = ik((x, z, y))
-        motors_[0].setPosition(theta0)
-        motors_[1].setPosition(theta1)
-        motors_[2].setPosition(theta2)
-        x,y,z = step_curve(movements24[1],(0,0,height),k)
-        theta0, theta1, theta2= ik((x, z, y))
-        motors_[3].setPosition(theta0)
-        motors_[4].setPosition(theta1)
-        motors_[5].setPosition(theta2)
-        x,y,z = step_curve(movements24[2],(0,0,height),k)
-        theta0,theta1,theta2= ik((x, z, y), type='right')
-        motors_[6].setPosition(theta0)
-        motors_[7].setPosition(theta1)
-        motors_[8].setPosition(theta2)
-        x,y,z = straight_curve(movements13[3],(0,0,height),k)
-        theta0, theta1, theta2 = ik((x, z, y), type='right')
-        motors_[9].setPosition(theta0)
-        motors_[10].setPosition(theta1)
-        motors_[11].setPosition(theta2)
-        robot.step()
+    if not alter:
+        for j in range(period):
+            k = j/period
+            x,y,z = step_curve((0,0,height),movements13[0],k)
+            theta0,theta1,theta2 = ik((x, z, y))
+            motors_[0].setPosition(theta0)
+            motors_[1].setPosition(theta1)
+            motors_[2].setPosition(theta2)
+            x,y,z = straight_curve((0,0,height),movements24[1],k)
+            theta0,theta1,theta2 = ik((x, z, y))
+            motors_[3].setPosition(theta0)
+            motors_[4].setPosition(theta1)
+            motors_[5].setPosition(theta2)
+            x,y,z = straight_curve((0,0,height),movements24[2],k)
+            theta0, theta1, theta2 = ik((x, z, y), type='right')
+            motors_[6].setPosition(theta0)
+            motors_[7].setPosition(theta1)
+            motors_[8].setPosition(theta2)
+            x,y,z = step_curve((0,0,height),movements13[3],k)
+            theta0,theta1,theta2= ik((x, z, y), type='right')
+            motors_[9].setPosition(theta0)
+            motors_[10].setPosition(theta1)
+            motors_[11].setPosition(theta2)
+            robot.step()
+        pass
+        for j in range(period):
+            k = j/period
+            x,y,z = straight_curve(movements13[0],(0,0,height),k)
+            theta0,theta1,theta2 = ik((x, z, y))
+            motors_[0].setPosition(theta0)
+            motors_[1].setPosition(theta1)
+            motors_[2].setPosition(theta2)
+            x,y,z = step_curve(movements24[1],(0,0,height),k)
+            theta0, theta1, theta2= ik((x, z, y))
+            motors_[3].setPosition(theta0)
+            motors_[4].setPosition(theta1)
+            motors_[5].setPosition(theta2)
+            x,y,z = step_curve(movements24[2],(0,0,height),k)
+            theta0,theta1,theta2= ik((x, z, y), type='right')
+            motors_[6].setPosition(theta0)
+            motors_[7].setPosition(theta1)
+            motors_[8].setPosition(theta2)
+            x,y,z = straight_curve(movements13[3],(0,0,height),k)
+            theta0, theta1, theta2 = ik((x, z, y), type='right')
+            motors_[9].setPosition(theta0)
+            motors_[10].setPosition(theta1)
+            motors_[11].setPosition(theta2)
+            robot.step()
+    else:
+        for j in range(period):
+            k = j / period
+            x, y, z = straight_curve((0, 0, height), movements24[0], k)
+            theta0, theta1, theta2 = ik((x, z, y))
+            motors_[0].setPosition(theta0)
+            motors_[1].setPosition(theta1)
+            motors_[2].setPosition(theta2)
+            x, y, z = step_curve((0, 0, height), movements13[1], k)
+            theta0, theta1, theta2 = ik((x, z, y))
+            motors_[3].setPosition(theta0)
+            motors_[4].setPosition(theta1)
+            motors_[5].setPosition(theta2)
+            x, y, z = step_curve((0, 0, height), movements13[2], k)
+            theta0, theta1, theta2 = ik((x, z, y), type='right')
+            motors_[6].setPosition(theta0)
+            motors_[7].setPosition(theta1)
+            motors_[8].setPosition(theta2)
+            x, y, z = straight_curve((0, 0, height), movements24[3], k)
+            theta0, theta1, theta2 = ik((x, z, y), type='right')
+            motors_[9].setPosition(theta0)
+            motors_[10].setPosition(theta1)
+            motors_[11].setPosition(theta2)
+            robot.step()
+        pass
+        for j in range(period):
+            k = j / period
+            x, y, z = step_curve(movements24[0], (0, 0, height), k)
+            theta0, theta1, theta2 = ik((x, z, y))
+            motors_[0].setPosition(theta0)
+            motors_[1].setPosition(theta1)
+            motors_[2].setPosition(theta2)
+            x, y, z = straight_curve(movements13[1], (0, 0, height), k)
+            theta0, theta1, theta2 = ik((x, z, y))
+            motors_[3].setPosition(theta0)
+            motors_[4].setPosition(theta1)
+            motors_[5].setPosition(theta2)
+            x, y, z = straight_curve(movements13[2], (0, 0, height), k)
+            theta0, theta1, theta2 = ik((x, z, y), type='right')
+            motors_[6].setPosition(theta0)
+            motors_[7].setPosition(theta1)
+            motors_[8].setPosition(theta2)
+            x, y, z = step_curve(movements24[3], (0, 0, height), k)
+            theta0, theta1, theta2 = ik((x, z, y), type='right')
+            motors_[9].setPosition(theta0)
+            motors_[10].setPosition(theta1)
+            motors_[11].setPosition(theta2)
+            robot.step()
 
 #把roll pitch yaw根据yaw做一个旋转变换
 
@@ -408,12 +512,12 @@ timestep = int(robot.getBasicTimeStep())
 motor_names=['motor1','motor2','motor3','motor4','motor5','motor6','motor7','motor8','motor9','motor10','motor11','motor12']
 motors = {}
 motors_ = []
-#gyro = robot.getDevice('gyro')
-#gyro.enable(32)
-#imu = robot.getDevice('IMU')
-#print(imu)
-#imu.enable(32)
-#print(gyro)
+gyro = robot.getDevice('gyro')
+gyro.enable(32)
+imu = robot.getDevice('IMU')
+print(imu)
+imu.enable(32)
+print(gyro)
 for i in motor_names:
     print(robot.getDevice(i))
     motors[i] = robot.getDevice(i)
@@ -433,15 +537,15 @@ smooth_to_position([[0, 0.16, 0],
                     [0, 0.16, 0],
                     [0, 0.16, 0]],16)
 
-#smooth_to_angle([0,0.25*pi,0.5*pi,
- #                         0,0.25*pi,0.5*pi,
- #                         0,0.25*pi,0.5*pi,
-  #                        0,0.25*pi,0.5*pi],64)
+#smooth_to_angle([0.25*pi,0.25*pi,0.5*pi,
+  #                        0.25*pi,0.25*pi,0.5*pi,
+    #                      0.25*pi,0.25*pi,0.5*pi,
+                #          0.25*pi,0.25*pi,0.5*pi],64)
 t_=0
 
 
 while robot.step(timestep) != -1:
-    #rpy = imu.getRollPitchYaw()
+    rpy = imu.getRollPitchYaw()
     #print(rpy)
     t_+=1
     t = t_ % 32
@@ -452,7 +556,7 @@ while robot.step(timestep) != -1:
         elif keyboard.is_pressed(('d')):
             turn_radius_one_step(0.5,pi/16,8,front_back='front',left_right='right')
         else:
-            trot(-t,length=0.12,height=0.13)
+            trot(-t,length=0.1)
     elif keyboard.is_pressed("s"):
         if keyboard.is_pressed('a'):
             turn_radius_one_step(0.5,pi/16,8,front_back='back',left_right='left')
@@ -461,10 +565,9 @@ while robot.step(timestep) != -1:
         else:
             trot(t,length=0.1)
     elif keyboard.is_pressed('a'):
-        turn_inplace_one_step(pi/16,8)
+        turn_inplace_one_step(pi/8,8)
     elif keyboard.is_pressed('d'):
-        turn_inplace_one_step(-pi/16,8)
+        turn_inplace_one_step(-pi/8,8)
     else:
-        continue
         stand_still_positions = rpy2angle(rpy,0.13)
         smooth_to_position(stand_still_positions, 4)
