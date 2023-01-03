@@ -1,3 +1,7 @@
+"""my_controller controller."""
+
+# You may need to import some classes of the controller module. Ex:
+#  from controller import Robot, Motor, DistanceSensor
 import math
 import keyboard
 import numpy as np
@@ -14,7 +18,7 @@ l4 = 0.12
 l5 = 0.03#末端与l3-l4连杆转轴的距离
 l7 = 0.1
 l8 = 0.1
-#!!!!注意!!!!!
+#!!!!注意!!!!!wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
 #step_curve的xyz是在机体参考系的,与脚参考系不同！
 #l1 l2 与夹角
 def cosine_law_length(l1,l2,theta):
@@ -92,7 +96,7 @@ def fk(theta,type='left'):
         p[2] = p[1]*math.sin(theta[0]) - motor0_radius*math.cos(theta[0])
         p[1] = p[1]*math.cos(theta[0]) + motor0_radius*math.sin(theta[0])
     return p
-def step_curve(start_point,end_point,progess,height=0.03):
+def step_curve(start_point,end_point,progess,height=0.02):
 
     x_s,y_s,z_s = start_point
     x_e,y_e,z_e = end_point
@@ -123,14 +127,14 @@ def rpy2angle(rpy,height):
     yaw = rpy[2]#无用
     #顺时针转动 如果roll为正则左倾,左边应该高右边应该低
     #如果pitch为正则前倾，应该前面高后面低
-    cdz_fb = (current_position[0][1]-current_position[1][1]+current_position[2][1]-current_position[3][1])/4
+    cdz_fb = (current_position[1][1] + current_position[3][1] - current_position[0][1] - current_position[2][1])/4
     cdz_lr = (current_position[0][1] + current_position[1][1] - current_position[2][1] - current_position[3][1])/4
-    dz_lr = y_len*math.tan(roll)/5
-    dz_fb = x_len*math.tan(pitch)/5
-    delta0 = cdz_lr + cdz_fb-dz_lr+dz_fb
-    delta1 = cdz_lr - cdz_fb-dz_lr+dz_fb
-    delta2 = -cdz_lr + cdz_fb + dz_lr + dz_fb
-    delta3 = -cdz_lr - cdz_fb - dz_lr - dz_fb
+    dz_lr = y_len*math.tan(roll)/2
+    dz_fb = x_len*math.tan(pitch)/2
+    delta0 = cdz_lr - cdz_fb  - dz_lr + dz_fb
+    delta1 = cdz_lr + cdz_fb  - dz_lr - dz_fb
+    delta2 = -cdz_lr - cdz_fb + dz_lr + dz_fb
+    delta3 = -cdz_lr + cdz_fb + dz_lr - dz_fb
     return  [[0,height+delta0,0],[0,height+delta1,0],[0,height+delta2,0],[0,height+delta3,0]]
 def smooth_to_angle(targets,steps):
     current_ = []
@@ -254,19 +258,9 @@ def turn_inplace_one_step(theta,period,height=0.13):
     #1是向前的
     legs_n_1 = R.dot(legs.T).T
     #3是跟上的
-    legs_n_3 = R.T.dot(legs_n_1.T).T
     movements1 = legs_n_1 - legs + np.array([0,0,height])
-    #movements1[0][2],movements1[1][2],movements1[2][2],movements1[3][2] = height,height,height,height
-    movements3 = legs_n_3 - legs_n_1 + np.array([0, 0, height])
-    #movements3[0][2],movements3[1][2],movements3[2][2],movements3[3][2] = height,height,height,height
     legs_n_2 = R.T.dot(legs.T).T
-    legs_n_4 = R.dot(legs_n_2.T).T
     movements2 = legs_n_2 - legs + np.array([0, 0, height])
-    #movements2[0][2],movements2[1][2],movements2[2][2],movements2[3][2] = height,height,height,height
-    movements4 = legs_n_4 - legs_n_2 + np.array([0, 0, height])
-    #movements4[0][2],movements4[1][2],movements4[2][2],movements4[3][2] = height,height,height,height
-    #print(movements1)
-    #print(movements2)
     print(movements1,"\n",movements2,'\n',theta)
     if theta > 0:
         print('leftTurn')
@@ -532,10 +526,10 @@ x = -0.1
 y = 0.13
 r = 0.05
 period = 16
-smooth_to_position([[0, 0.16, 0],
-                    [0, 0.16, 0],
-                    [0, 0.16, 0],
-                    [0, 0.16, 0]],16)
+smooth_to_position([[0, 0.13, 0],
+                    [0, 0.13, 0],
+                    [0, 0.13, 0],
+                    [0, 0.13, 0]],16)
 
 #smooth_to_angle([0.25*pi,0.25*pi,0.5*pi,
   #                        0.25*pi,0.25*pi,0.5*pi,
@@ -546,7 +540,7 @@ t_=0
 
 while robot.step(timestep) != -1:
     rpy = imu.getRollPitchYaw()
-    #print(rpy)
+    print(rpy)
     t_+=1
     t = t_ % 32
     pass
@@ -570,4 +564,4 @@ while robot.step(timestep) != -1:
         turn_inplace_one_step(-pi/8,8)
     else:
         stand_still_positions = rpy2angle(rpy,0.13)
-        smooth_to_position(stand_still_positions, 4)
+        smooth_to_position(stand_still_positions, 8)
