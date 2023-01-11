@@ -1,0 +1,432 @@
+#VRML_SIM R2023a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/floors/protos/RectangleArena.proto"
+
+WorldInfo {
+  FPS 144
+}
+Viewpoint {
+  orientation -0.15585600163759147 -0.2469999318224723 0.9563994669766589 4.9605750696183595
+  position -0.47494226734759865 1.0980072056637742 0.583960389016602
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 20 20
+}
+DEF series_dog Robot {
+  translation -0.07210514405783386 -0.00327755335360494 0.17409386096012122
+  rotation -0.10568462915020725 0.04659781949793307 0.993307305107247 0.0267365473090347
+  children [
+    DEF right_front_leg HingeJoint {
+      jointParameters HingeJointParameters {
+        position -1.9730852383048614e-06
+        anchor -0.13 -0.06 0
+      }
+      device [
+        RotationalMotor {
+          name "motor10"
+          maxTorque 100
+        }
+      ]
+      endPoint Solid {
+        translation -0.13 -0.06 0
+        rotation -7.354032311903197e-06 0.9999999999459611 -7.348178429407459e-06 1.570000000054034
+        children [
+          DEF rodd2 HingeJoint {
+            jointParameters HingeJointParameters {
+              position 1
+              axis 0 1 0
+            }
+            device [
+              RotationalMotor {
+                name "motor11"
+                maxTorque 100
+              }
+            ]
+            endPoint Solid {
+              translation 0.042073519174461414 -0.014999999999999736 0.027015162118321428
+              rotation 0.9236409470524528 -0.2710063281622975 0.2710036365513149 1.6501474619918526
+              children [
+                HingeJoint {
+                  jointParameters HingeJointParameters {
+                    position 1
+                    axis 0 0 -1
+                    anchor 0.05 0 0
+                  }
+                  device [
+                    RotationalMotor {
+                      name "motor12"
+                      maxTorque 100
+                    }
+                  ]
+                  endPoint Solid {
+                    translation 0.07431360376406632 -0.037866194316355316 0.009999999999999997
+                    rotation 0 0 -1 0.9999999999999998
+                    children [
+                      DEF rod1 Shape {
+                        appearance PBRAppearance {
+                          baseColor 0 0 0
+                        }
+                        geometry Box {
+                          size 0.11 0.01 0.01
+                        }
+                      }
+                    ]
+                    name "rod"
+                    boundingObject USE rod1
+                    physics Physics {
+                      density -1
+                      mass 0.8
+                    }
+                  }
+                }
+                DEF rod1 Shape {
+                  appearance PBRAppearance {
+                    baseColor 1 0 1
+                  }
+                  geometry Box {
+                    size 0.12 0.01 0.01
+                  }
+                }
+              ]
+              name "solid(2)"
+              boundingObject USE rod1
+              physics Physics {
+                density -1
+                mass 0.8
+              }
+            }
+          }
+          DEF root Shape {
+            appearance PBRAppearance {
+              baseColor 1 0 0
+            }
+            geometry Cylinder {
+              height 0.04
+              radius 0.01
+            }
+          }
+        ]
+        name "solid(3)"
+        boundingObject USE root
+        physics Physics {
+          density -1
+          mass 0.3
+        }
+      }
+    }
+    DEF right_front_leg HingeJoint {
+      jointParameters HingeJointParameters {
+        position 5.009572884565564e-06
+        anchor 0.13 -0.06 0
+      }
+      device [
+        RotationalMotor {
+          name "motor7"
+          maxTorque 100
+        }
+      ]
+      endPoint Solid {
+        translation 0.13 -0.06 0
+        rotation -3.8599219042359986e-06 0.9999999999851129 -3.856849368198852e-06 1.5700000000148837
+        children [
+          DEF rodd2 HingeJoint {
+            jointParameters HingeJointParameters {
+              position 1
+              axis 0 1 0
+            }
+            device [
+              RotationalMotor {
+                name "motor8"
+                maxTorque 100
+              }
+            ]
+            endPoint Solid {
+              translation 0.04207351917446257 -0.01499999999999991 0.02701516211832215
+              rotation 0.9236409470524534 -0.2710063281622971 0.27100363655131376 1.6501474619918508
+              children [
+                HingeJoint {
+                  jointParameters HingeJointParameters {
+                    position 1
+                    axis 0 0 -1
+                    anchor 0.05 0 0
+                  }
+                  device [
+                    RotationalMotor {
+                      name "motor9"
+                      maxTorque 100
+                    }
+                  ]
+                  endPoint Solid {
+                    translation 0.07431360376406629 -0.03786619431635531 0.009999999999999997
+                    rotation 0 0 -1 0.9999999999999998
+                    children [
+                      DEF rod1 Shape {
+                        appearance PBRAppearance {
+                          baseColor 0 0 0
+                        }
+                        geometry Box {
+                          size 0.11 0.01 0.01
+                        }
+                      }
+                    ]
+                    name "rod"
+                    boundingObject USE rod1
+                    physics Physics {
+                      density -1
+                      mass 0.8
+                    }
+                  }
+                }
+                DEF rod1 Shape {
+                  appearance PBRAppearance {
+                    baseColor 1 0 1
+                  }
+                  geometry Box {
+                    size 0.12 0.01 0.01
+                  }
+                }
+              ]
+              name "solid(2)"
+              boundingObject USE rod1
+              physics Physics {
+                density -1
+                mass 0.8
+              }
+            }
+          }
+          DEF root Shape {
+            appearance PBRAppearance {
+              baseColor 1 0 0
+            }
+            geometry Cylinder {
+              height 0.04
+              radius 0.01
+            }
+          }
+        ]
+        name "solid(2)"
+        boundingObject USE root
+        physics Physics {
+          density -1
+          mass 0.3
+        }
+      }
+    }
+    DEF left_back_leg HingeJoint {
+      jointParameters HingeJointParameters {
+        position 5.844820671500167e-06
+        anchor -0.13 0.06 0
+      }
+      device [
+        RotationalMotor {
+          name "motor4"
+          maxTorque 100
+        }
+      ]
+      endPoint Solid {
+        translation -0.13 0.06 0
+        rotation -3.4419653131537226e-06 0.9999999999881624 -3.439225474721112e-06 1.5700000000118357
+        children [
+          DEF rodd2 HingeJoint {
+            jointParameters HingeJointParameters {
+              position 1
+              axis 0 1 0
+            }
+            device [
+              RotationalMotor {
+                name "motor5"
+                maxTorque 100
+              }
+            ]
+            endPoint Solid {
+              translation 0.042073530449166965 0.014999999999999982 0.02701514455901055
+              rotation -0.9236414726879273 -0.27100351370581743 -0.271004659535547 1.6501446213598296
+              children [
+                HingeJoint {
+                  jointParameters HingeJointParameters {
+                    position 1
+                    axis 0 0 1
+                    anchor 0.05 0 0
+                  }
+                  device [
+                    RotationalMotor {
+                      name "motor6"
+                      maxTorque 100
+                    }
+                  ]
+                  endPoint Solid {
+                    translation 0.07431360376406629 0.03786619431635532 0.009999999999999997
+                    rotation 0 0 1 0.9999999999999998
+                    children [
+                      DEF rod1 Shape {
+                        appearance PBRAppearance {
+                          baseColor 0 0 0
+                        }
+                        geometry Box {
+                          size 0.11 0.01 0.01
+                        }
+                      }
+                    ]
+                    name "rod"
+                    boundingObject USE rod1
+                    physics Physics {
+                      density -1
+                      mass 0.8
+                    }
+                  }
+                }
+                DEF rod1 Shape {
+                  appearance PBRAppearance {
+                    baseColor 1 0 1
+                  }
+                  geometry Box {
+                    size 0.12 0.01 0.01
+                  }
+                }
+              ]
+              name "solid(2)"
+              boundingObject USE rod1
+              physics Physics {
+                density -1
+                mass 0.8
+              }
+            }
+          }
+          DEF root Shape {
+            appearance PBRAppearance {
+              baseColor 1 0 0
+            }
+            geometry Cylinder {
+              height 0.04
+              radius 0.01
+            }
+          }
+        ]
+        name "solid(1)"
+        boundingObject USE root
+        physics Physics {
+          density -1
+          mass 0.3
+        }
+      }
+    }
+    DEF left_front_leg HingeJoint {
+      jointParameters HingeJointParameters {
+        position 1.3790702345515458e-06
+        anchor 0.13 0.06 0
+      }
+      device [
+        RotationalMotor {
+          name "motor1"
+          maxTorque 100
+        }
+      ]
+      endPoint Solid {
+        translation 0.13 0.06 0
+        rotation -5.6765925118645306e-06 0.9999999999678019 -5.6720738880554455e-06 1.5700000000321985
+        children [
+          DEF rodd2 HingeJoint {
+            jointParameters HingeJointParameters {
+              position 1
+              axis 0 1 0
+            }
+            device [
+              RotationalMotor {
+                name "motor2"
+                maxTorque 100
+              }
+            ]
+            endPoint Solid {
+              translation 0.042073530449167014 0.01499999999999991 0.027015144559010596
+              rotation -0.9236414726879262 -0.2710035137058182 -0.27100465953555036 1.650144621359832
+              children [
+                HingeJoint {
+                  jointParameters HingeJointParameters {
+                    position 1
+                    axis 0 0 1
+                    anchor 0.05 0 0
+                  }
+                  device [
+                    RotationalMotor {
+                      name "motor3"
+                      maxTorque 100
+                    }
+                  ]
+                  endPoint Solid {
+                    translation 0.07377330145819815 0.03702472333154745 0.01
+                    rotation 0 0 1 0.9999999999999998
+                    children [
+                      DEF rod1 Shape {
+                        appearance PBRAppearance {
+                          baseColor 0 0 0
+                        }
+                        geometry Box {
+                          size 0.11 0.01 0.01
+                        }
+                      }
+                    ]
+                    name "rod"
+                    boundingObject USE rod1
+                    physics Physics {
+                      density -1
+                      mass 0.8
+                    }
+                  }
+                }
+                DEF rod1 Shape {
+                  appearance PBRAppearance {
+                    baseColor 1 0 1
+                  }
+                  geometry Box {
+                    size 0.12 0.01 0.01
+                  }
+                }
+              ]
+              name "solid(2)"
+              boundingObject USE rod1
+              physics Physics {
+                density -1
+                mass 0.8
+              }
+            }
+          }
+          DEF root Shape {
+            appearance PBRAppearance {
+              baseColor 1 0 0
+            }
+            geometry Cylinder {
+              height 0.04
+              radius 0.01
+            }
+          }
+        ]
+        boundingObject USE root
+        physics Physics {
+          density -1
+          mass 0.3
+        }
+      }
+    }
+    DEF body Shape {
+      appearance PBRAppearance {
+        baseColor 0.666667 1 1
+      }
+      geometry Box {
+        size 0.3 0.1 0.06
+      }
+    }
+  ]
+  name "dog"
+  boundingObject USE body
+  physics Physics {
+    density -1
+    mass 6.4
+  }
+  controller "<extern>"
+}
