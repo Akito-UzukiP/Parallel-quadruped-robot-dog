@@ -5,4 +5,4 @@
 实现了串联、并联正逆运动学计算、trot walk步伐控制、基于trot的原地转弯、固定半径转弯、斜坡平衡（仅并联机体）
 用keyboard包实现了键盘控制移动
 将世界文件用webots直接读取后 Robots选择使用<extern>控制器 在外部运行controller.py即可使用键盘控制移动
-!(https://github.com/Akito-UzukiP/Parallel-quadruped-robot-dog/blob/main/pictures/6N70~NPUMN%24(YL~_JXQV(74.png)
+!(https://github.com/Akito-UzukiP/Parallel-quadruped-robot-dog/blob/main/pictures/1.png)
